@@ -273,7 +273,30 @@
         function loadLocalSettings() {
             const saved = localStorage.getItem('smart_alert_settings_' + userToken);
             if (saved) {
-                currentSettings = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                
+                // دمج الإعدادات الأساسية
+                currentSettings = { ...currentSettings, ...parsed };
+                
+                // التأكد من دمج التنبيهات وعدم فقدان أي نوع جديد (مثل donation)
+                currentSettings.alerts = { ...currentSettings.alerts, ...(parsed.alerts || {}) };
+                
+                const defaultAlerts = {
+                    follow: { label: 'NEW FOLLOWER', color: '#00e5ff', image: '', sound: '', enabled: true, particles: true },
+                    gift:   { label: 'GIFT RECEIVED', color: '#ffd700', image: '', sound: '', enabled: true, particles: true },
+                    like:   { label: 'LIKES', color: '#ff2d55', image: '', sound: '', enabled: true, particles: true },
+                    share:  { label: 'SHARED', color: '#00e676', image: '', sound: '', enabled: true, particles: true },
+                    sub:    { label: 'NEW SUBSCRIBER', color: '#b388ff', image: '', sound: '', enabled: true, particles: true },
+                    join:   { label: 'JOINED', color: '#536dfe', image: '', sound: '', enabled: true, particles: true },
+                    donation: { label: 'DONATION', color: '#10b981', image: '', sound: '', enabled: true, particles: true }
+                };
+                
+                for (const key in defaultAlerts) {
+                    if (!currentSettings.alerts[key]) {
+                        currentSettings.alerts[key] = defaultAlerts[key];
+                    }
+                }
+
                 // تحديث السيرفر
                 socket.emit('update_settings', { settings: currentSettings });
             }
@@ -291,7 +314,13 @@
 
             currentSettings.globalSound = document.getElementById('globalSoundToggle').checked;
             currentSettings.volume = document.getElementById('volumeSlider').value;
-            currentSettings.dokanWidgetUrl = document.getElementById('dokanUrlInput').value;
+            
+            let dokanUrl = document.getElementById('dokanUrlInput').value.trim();
+            if (dokanUrl && !dokanUrl.startsWith('http://') && !dokanUrl.startsWith('https://')) {
+                dokanUrl = 'https://' + dokanUrl;
+                document.getElementById('dokanUrlInput').value = dokanUrl;
+            }
+            currentSettings.dokanWidgetUrl = dokanUrl;
             
             currentSettings.ttsEnabled = document.getElementById('ttsEnabledToggle').checked;
             currentSettings.alertDuration = parseFloat(document.getElementById('alertDurationInput').value) || 5;

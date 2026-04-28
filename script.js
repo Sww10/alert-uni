@@ -112,8 +112,13 @@ function playTTS(name, message) {
 function updateDokanWidget() {
     dokanContainer.innerHTML = '';
     if (userSettings.dokanWidgetUrl) {
+        let url = userSettings.dokanWidgetUrl.trim();
+        if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
+        
         const iframe = document.createElement('iframe');
-        iframe.src = userSettings.dokanWidgetUrl;
+        iframe.src = url;
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';
