@@ -228,10 +228,18 @@ function processQueue() {
     renderAlert(data, config);
 }
 
+
 // ===== بناء وعرض التنبيه =====
 function renderAlert(data, config) {
     playSound(data.type);
     playTTS(data.name, data.message);
+
+    const isPremium = data.type === 'sub' || (data.type === 'gift' && data.coins >= 100) || data.isPremium;
+
+    if (isPremium) {
+        renderPremiumAlert(data, config);
+        return;
+    }
 
     const particleCount = data.type === 'gift' ? 40 : data.type === 'sub' ? 35 : 20;
     spawnParticles(data.type, particleCount);
@@ -249,7 +257,7 @@ function renderAlert(data, config) {
     card.style.setProperty('--inner-glow', `radial-gradient(ellipse at 30% 50%, ${cColor}, transparent)`);
     card.style.setProperty('--glow-color', cColor);
     card.style.setProperty('--label-color', cColor);
-    card.style.setProperty('--label-bg', `rgba(255,255,255,0.1)`); // مجرد خلفية خفيفة
+    card.style.setProperty('--label-bg', `rgba(255,255,255,0.1)`); 
 
     // الأفاتار أو الصورة المخصصة
     let avatarHtml;
@@ -310,9 +318,50 @@ function renderAlert(data, config) {
             card.remove();
             isShowingAlert = false;
             processQueue();
-        }, 600 * animSpeed); // الانتظار حتى انتهاء خروج البطاقة بناء على السرعة
+        }, 600 * animSpeed);
     }, durationMs);
 }
+
+// ===== وظيفة التنبيه السينمائي الفاخر =====
+function renderPremiumAlert(data, config) {
+    const cColor = config.color || '#b388ff';
+    const labelText = config.label || data.type.toUpperCase();
+    const animSpeed = userSettings.animSpeed || 1;
+
+    // انفجار كبير للجزيئات
+    spawnParticles(data.type, 100);
+
+    const premiumContainer = document.createElement('div');
+    premiumContainer.className = 'premium-alert';
+    premiumContainer.style.setProperty('--glow-color', cColor);
+    premiumContainer.style.setProperty('--label-color', cColor);
+
+    premiumContainer.innerHTML = `
+        <div class="premium-bg-glow"></div>
+        <div class="premium-logo-container">
+            <img src="assets/premium_logo.png" class="premium-logo-img" alt="Premium Logo">
+        </div>
+        <div class="premium-content">
+            <div class="premium-label">${labelText}</div>
+            <div class="premium-username">${data.name}</div>
+            <div class="premium-message">${data.message}</div>
+        </div>
+    `;
+
+    document.body.appendChild(premiumContainer);
+
+    const durationMs = (userSettings.alertDuration || 7) * 1000;
+
+    setTimeout(() => {
+        premiumContainer.classList.add('premium-exit');
+        setTimeout(() => {
+            premiumContainer.remove();
+            isShowingAlert = false;
+            processQueue();
+        }, 1000 * animSpeed);
+    }, durationMs);
+}
+
 
 // ===== الاتصال بالسيرفر =====
 const socket = io();
