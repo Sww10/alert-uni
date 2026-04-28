@@ -98,6 +98,12 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // تحديث رابط البث بناءً على الدومين الحالي
+        window.addEventListener('DOMContentLoaded', () => {
+            const alertLinkElement = document.getElementById('alertLink');
+            alertLinkElement.textContent = window.location.origin + '/alert.html';
+        });
+
         const socket = io();
         let isConnected = false;
 

@@ -205,11 +205,14 @@ io.on('connection', (socket) => {
 
 // تشغيل الخادم
 server.listen(PORT, () => {
+    const isRenderUrl = process.env.RENDER_EXTERNAL_URL;
+    const baseUrl = isRenderUrl ? isRenderUrl : `http://localhost:${PORT}`;
+
     console.log(`\n${'='.repeat(55)}`);
     console.log(`🚀 نظام التنبيهات الذكي يعمل بنجاح!`);
     console.log(`${'='.repeat(55)}`);
-    console.log(`\n🎮 لوحة التحكم:       http://localhost:${PORT}/`);
-    console.log(`📺 شاشة التنبيهات:    http://localhost:${PORT}/alert.html`);
+    console.log(`\n🎮 لوحة التحكم:       ${baseUrl}/`);
+    console.log(`📺 شاشة التنبيهات:    ${baseUrl}/alert.html`);
     console.log(`\n💡 ضع رابط شاشة التنبيهات في TikTok Live Studio`);
     console.log(`${'='.repeat(55)}\n`);
 });
