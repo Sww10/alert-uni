@@ -14,7 +14,8 @@
         <div class="panel-header">
             <div class="logo-glow"></div>
             <h1>⚡ Smart Alerts</h1>
-            <p class="subtitle">نظام تنبيهات ذكي لبث التيك توك</p>
+            <p class="subtitle">نظام تنبيهات ذكي لبث التيك توك (منصة متكاملة)</p>
+            <button class="btn-settings-icon" onclick="openSettings()">⚙️ الإعدادات</button>
         </div>
 
         <!-- حالة الاتصال -->
@@ -60,54 +61,148 @@
 
         <!-- أزرار التجربة -->
         <div class="buttons-grid">
-            <button class="btn btn-follow" onclick="testAlert('follow')">
-                <span class="btn-icon">👤</span>
-                <span>متابعة</span>
-            </button>
-            <button class="btn btn-gift" onclick="testAlert('gift')">
-                <span class="btn-icon">🎁</span>
-                <span>هدية</span>
-            </button>
-            <button class="btn btn-like" onclick="testAlert('like')">
-                <span class="btn-icon">❤️</span>
-                <span>إعجاب</span>
-            </button>
-            <button class="btn btn-share" onclick="testAlert('share')">
-                <span class="btn-icon">🔗</span>
-                <span>مشاركة</span>
-            </button>
-            <button class="btn btn-sub" onclick="testAlert('sub')">
-                <span class="btn-icon">🌟</span>
-                <span>اشتراك</span>
-            </button>
-            <button class="btn btn-join" onclick="testAlert('join')">
-                <span class="btn-icon">👋</span>
-                <span>انضمام</span>
-            </button>
+            <button class="btn btn-follow" onclick="testAlert('follow')">👤 متابعة</button>
+            <button class="btn btn-gift" onclick="testAlert('gift')">🎁 هدية</button>
+            <button class="btn btn-like" onclick="testAlert('like')">❤️ إعجاب</button>
+            <button class="btn btn-share" onclick="testAlert('share')">🔗 مشاركة</button>
+            <button class="btn btn-sub" onclick="testAlert('sub')">🌟 اشتراك</button>
+            <button class="btn btn-join" onclick="testAlert('join')">👋 انضمام</button>
+            <button class="btn btn-donation" style="background: linear-gradient(135deg, #10b981, #059669); grid-column: span 3;" onclick="testAlert('donation')">💸 تجربة دكان تب (Donation)</button>
         </div>
 
         <!-- رابط شاشة البث -->
         <div class="alert-link-section">
-            <p>📺 رابط شاشة التنبيهات (ضعه في TikTok Studio):</p>
-            <div class="link-copy-box" onclick="copyLink()">
-                <code id="alertLink">http://localhost:3000/alert.html</code>
+            <p>📺 رابط شاشة التنبيهات (الخاص بك - لا تشاركه!):</p>
+            <div class="link-copy-box" onclick="copyLink('alertLink', 'copyFeedback')">
+                <code id="alertLink">جاري التوليد...</code>
                 <span class="copy-btn" id="copyFeedback">📋 نسخ</span>
+            </div>
+            <br>
+            <p style="font-size: 0.75rem; color: #94a3b8;">⚠️ احفظ رابط هذه الصفحة للعودة لإعداداتك لاحقاً.</p>
+        </div>
+    </div>
+
+    <!-- نافذة الإعدادات (Settings Modal) -->
+    <div id="settingsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ إعدادات التنبيهات والثيمات</h2>
+                <button class="close-btn" onclick="closeSettings()">✖</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- إعدادات عامة -->
+                <div class="settings-group">
+                    <h3>صوت التنبيهات (عام)</h3>
+                    <div class="setting-row">
+                        <label>تفعيل الصوت</label>
+                        <input type="checkbox" id="globalSoundToggle" checked>
+                    </div>
+                    <div class="setting-row">
+                        <label>مستوى الصوت</label>
+                        <input type="range" id="volumeSlider" min="0" max="100" value="50">
+                        <span id="volumeValue">50%</span>
+                    </div>
+                </div>
+
+                <!-- دكان تب -->
+                <div class="settings-group">
+                    <h3>منصة التبرعات (Creators.sa / Dokan)</h3>
+                    <label style="font-size: 0.8rem; color:#94a3b8">الصق رابط Widget الخاص بالتنبيهات من منصة صناع المحتوى</label>
+                    <input type="text" id="dokanUrlInput" class="custom-input" placeholder="https://app.creators.sa/widget/...">
+                </div>
+
+                <!-- الثيمات -->
+                <div class="settings-group">
+                    <h3>إدارة الثيمات 🎨</h3>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-connect" style="padding: 10px; font-size:0.9rem" onclick="exportTheme()">📥 تصدير ثيم</button>
+                        <button class="btn btn-disconnect" style="padding: 10px; background: #6366f1; font-size:0.9rem" onclick="document.getElementById('importThemeInput').click()">📤 استيراد ثيم</button>
+                        <input type="file" id="importThemeInput" style="display: none;" accept=".json" onchange="importTheme(event)">
+                    </div>
+                </div>
+
+                <!-- تخصيص كل تنبيه -->
+                <div class="settings-group">
+                    <h3>تخصيص التنبيهات</h3>
+                    <select id="alertTypeSelect" class="custom-input" onchange="loadAlertSettingsFor(this.value)">
+                        <option value="follow">👤 متابعة</option>
+                        <option value="gift">🎁 هدية</option>
+                        <option value="like">❤️ إعجاب</option>
+                        <option value="share">🔗 مشاركة</option>
+                        <option value="sub">🌟 اشتراك</option>
+                        <option value="join">👋 انضمام</option>
+                        <option value="donation">💸 دعم (مخصص)</option>
+                    </select>
+
+                    <div id="specificAlertSettings" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                        <div class="setting-row">
+                            <label>تفعيل هذا التنبيه</label>
+                            <input type="checkbox" id="alertEnabledToggle">
+                        </div>
+                        <input type="text" id="alertLabelInput" class="custom-input" placeholder="النص (مثال: NEW FOLLOWER)">
+                        
+                        <div style="display: flex; gap:10px; align-items:center;">
+                            <label>اللون الأساسي:</label>
+                            <input type="color" id="alertColorInput" class="color-picker">
+                        </div>
+
+                        <label style="font-size: 0.8rem; color:#94a3b8">صورة مخصصة (اترك فارغ للافتراضي):</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="alertImageInput" class="custom-input" placeholder="رابط الصورة (URL)">
+                            <button class="btn-sm" onclick="document.getElementById('imageUpload').click()">رفع</button>
+                            <input type="file" id="imageUpload" style="display:none" accept="image/*" onchange="handleFileUpload(event, 'alertImageInput')">
+                        </div>
+
+                        <label style="font-size: 0.8rem; color:#94a3b8">صوت مخصص (اترك فارغ للافتراضي):</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="alertSoundInput" class="custom-input" placeholder="رابط الصوت (URL mp3)">
+                            <button class="btn-sm" onclick="document.getElementById('soundUpload').click()">رفع</button>
+                            <input type="file" id="soundUpload" style="display:none" accept="audio/*" onchange="handleFileUpload(event, 'alertSoundInput')">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-connect" onclick="saveSettings()">💾 حفظ وتطبيق</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // تحديث رابط البث بناءً على الدومين الحالي
-        window.addEventListener('DOMContentLoaded', () => {
-            const alertLinkElement = document.getElementById('alertLink');
-            alertLinkElement.textContent = window.location.origin + '/alert.html';
-        });
+        // --- نظام التوكن (Token System) ---
+        let userToken = localStorage.getItem('smart_alert_token');
+        if (!userToken) {
+            userToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('smart_alert_token', userToken);
+            // تحديث الرابط في المتصفح لسهولة الحفظ بدون إعادة التحميل
+            window.history.replaceState({}, '', `?token=${userToken}`);
+        }
+
+        // إذا كان الرابط يحتوي على توكن، نستخدمه
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('token') && urlParams.get('token') !== userToken) {
+            userToken = urlParams.get('token');
+            localStorage.setItem('smart_alert_token', userToken);
+        }
 
         const socket = io();
         let isConnected = false;
 
-        // --- عناصر الصفحة ---
+        // إعداد الرابط الخاص بشاشة البث
+        window.addEventListener('DOMContentLoaded', () => {
+            const alertLinkElement = document.getElementById('alertLink');
+            alertLinkElement.textContent = window.location.origin + '/alert.html?token=' + userToken;
+            
+            // تحميل الإعدادات المحفوظة
+            loadLocalSettings();
+            
+            socket.emit('join_room', { token: userToken });
+        });
+
+        // --- المتغيرات ---
         const statusBar = document.getElementById('statusBar');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
@@ -118,6 +213,140 @@
         const liveInfo = document.getElementById('liveInfo');
         const viewerCount = document.getElementById('viewerCount');
         const errorMsg = document.getElementById('errorMsg');
+        const settingsModal = document.getElementById('settingsModal');
+
+        // --- الإعدادات الافتراضية ---
+        let currentSettings = {
+            globalSound: true,
+            volume: 50,
+            dokanWidgetUrl: '',
+            customCss: '',
+            alerts: {
+                follow: { label: 'NEW FOLLOWER', color: '#00e5ff', image: '', sound: '', enabled: true },
+                gift:   { label: 'GIFT RECEIVED', color: '#ffd700', image: '', sound: '', enabled: true },
+                like:   { label: 'LIKES', color: '#ff2d55', image: '', sound: '', enabled: true },
+                share:  { label: 'SHARED', color: '#00e676', image: '', sound: '', enabled: true },
+                sub:    { label: 'NEW SUBSCRIBER', color: '#b388ff', image: '', sound: '', enabled: true },
+                join:   { label: 'JOINED', color: '#536dfe', image: '', sound: '', enabled: true },
+                donation: { label: 'DONATION', color: '#10b981', image: '', sound: '', enabled: true }
+            }
+        };
+
+        function loadLocalSettings() {
+            const saved = localStorage.getItem('smart_alert_settings_' + userToken);
+            if (saved) {
+                currentSettings = JSON.parse(saved);
+                // تحديث السيرفر
+                socket.emit('update_settings', { settings: currentSettings });
+            }
+        }
+
+        function saveSettings() {
+            // جلب القيم الحالية من نوع التنبيه المفتوح وحفظه
+            const currentType = document.getElementById('alertTypeSelect').value;
+            currentSettings.alerts[currentType].label = document.getElementById('alertLabelInput').value;
+            currentSettings.alerts[currentType].color = document.getElementById('alertColorInput').value;
+            currentSettings.alerts[currentType].image = document.getElementById('alertImageInput').value;
+            currentSettings.alerts[currentType].sound = document.getElementById('alertSoundInput').value;
+            currentSettings.alerts[currentType].enabled = document.getElementById('alertEnabledToggle').checked;
+
+            currentSettings.globalSound = document.getElementById('globalSoundToggle').checked;
+            currentSettings.volume = document.getElementById('volumeSlider').value;
+            currentSettings.dokanWidgetUrl = document.getElementById('dokanUrlInput').value;
+
+            localStorage.setItem('smart_alert_settings_' + userToken, JSON.stringify(currentSettings));
+            socket.emit('update_settings', { settings: currentSettings });
+            closeSettings();
+        }
+
+        // --- واجهة الإعدادات ---
+        function openSettings() {
+            document.getElementById('globalSoundToggle').checked = currentSettings.globalSound;
+            document.getElementById('volumeSlider').value = currentSettings.volume;
+            document.getElementById('volumeValue').textContent = currentSettings.volume + '%';
+            document.getElementById('dokanUrlInput').value = currentSettings.dokanWidgetUrl || '';
+            
+            loadAlertSettingsFor('follow');
+            document.getElementById('alertTypeSelect').value = 'follow';
+
+            settingsModal.style.display = 'flex';
+        }
+
+        function closeSettings() {
+            settingsModal.style.display = 'none';
+        }
+
+        function loadAlertSettingsFor(type) {
+            // حفظ التغييرات المؤقتة للنوع السابق إذا كان هناك نوع مفتوح قبل التغيير (يمكن تحسينه)
+            const config = currentSettings.alerts[type];
+            document.getElementById('alertLabelInput').value = config.label || '';
+            document.getElementById('alertColorInput').value = config.color || '#ffffff';
+            document.getElementById('alertImageInput').value = config.image || '';
+            document.getElementById('alertSoundInput').value = config.sound || '';
+            document.getElementById('alertEnabledToggle').checked = config.enabled !== false;
+        }
+
+        document.getElementById('alertTypeSelect').addEventListener('focus', function() {
+            // قبل التغيير، احفظ الحالي
+            const prevType = this.value;
+            currentSettings.alerts[prevType].label = document.getElementById('alertLabelInput').value;
+            currentSettings.alerts[prevType].color = document.getElementById('alertColorInput').value;
+            currentSettings.alerts[prevType].image = document.getElementById('alertImageInput').value;
+            currentSettings.alerts[prevType].sound = document.getElementById('alertSoundInput').value;
+            currentSettings.alerts[prevType].enabled = document.getElementById('alertEnabledToggle').checked;
+        });
+
+        document.getElementById('volumeSlider').addEventListener('input', function() {
+            document.getElementById('volumeValue').textContent = this.value + '%';
+        });
+
+        // قراءة الملف كـ Base64
+        function handleFileUpload(event, inputId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // التأكد من الحجم (مثلا لا يتجاوز 2 ميجا)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('عذراً، حجم الملف كبير جداً. الحد الأقصى هو 2 ميجابايت لتجنب امتلاء المتصفح.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(inputId).value = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // استيراد وتصدير الثيمات
+        function exportTheme() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentSettings));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "smart_alerts_theme.json");
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importTheme(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const theme = JSON.parse(e.target.result);
+                    if (theme && theme.alerts) {
+                        currentSettings = theme;
+                        saveSettings();
+                        alert('✅ تم تطبيق الثيم بنجاح!');
+                    }
+                } catch (err) {
+                    alert('❌ ملف الثيم غير صالح.');
+                }
+            };
+            reader.readAsText(file);
+        }
 
         // --- تحديث الحالة ---
         socket.on('status', (data) => {
@@ -184,16 +413,15 @@
             socket.emit('test_alert', type);
         }
 
-        function copyLink() {
-            const link = document.getElementById('alertLink').textContent;
+        function copyLink(elementId, feedbackId) {
+            const link = document.getElementById(elementId).textContent;
             navigator.clipboard.writeText(link).then(() => {
-                const fb = document.getElementById('copyFeedback');
+                const fb = document.getElementById(feedbackId);
                 fb.textContent = '✅ تم النسخ!';
                 setTimeout(() => fb.textContent = '📋 نسخ', 2000);
             });
         }
 
-        // Enter للاتصال
         usernameInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleConnect();
         });

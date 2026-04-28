@@ -1,12 +1,58 @@
 /* ============================================
    🚀 SMART ALERTS - Script Engine
-   محرك التنبيهات الذكي مع جزيئات متطايرة
+   محرك التنبيهات الذكي المخصص
    ============================================ */
+
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('token');
+
+if (!token) {
+    document.body.innerHTML = `
+        <div style="color:white;text-align:center;margin-top:20vh;font-family:sans-serif;">
+            <h1>❌ خطأ</h1>
+            <p>رابط التنبيهات غير صالح. يرجى نسخ الرابط الصحيح من لوحة التحكم.</p>
+        </div>
+    `;
+    throw new Error('No token provided');
+}
 
 const alertContainer = document.getElementById('alert-container');
 const canvas = document.getElementById('particles-canvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
-const socket = io();
+const dokanContainer = document.getElementById('dokan-container');
+
+// الإعدادات الافتراضية
+let userSettings = {
+    globalSound: true,
+    volume: 50,
+    dokanWidgetUrl: '',
+    customCss: '',
+    alerts: {
+        follow: { label: 'NEW FOLLOWER', color: '#00e5ff', image: '', sound: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3', enabled: true },
+        gift:   { label: 'GIFT RECEIVED', color: '#ffd700', image: '', sound: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b8f72927.mp3?filename=magic-wand-6214.mp3', enabled: true },
+        like:   { label: 'LIKES', color: '#ff2d55', image: '', sound: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_d6d03f69a9.mp3?filename=pop-39222.mp3', enabled: true },
+        share:  { label: 'SHARED', color: '#00e676', image: '', sound: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3?filename=notification-1-6296.mp3', enabled: true },
+        sub:    { label: 'NEW SUBSCRIBER', color: '#b388ff', image: '', sound: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=success-fanfare-trumpets-6185.mp3', enabled: true },
+        join:   { label: 'JOINED', color: '#536dfe', image: '', sound: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_d6d03f69a9.mp3?filename=pop-39222.mp3', enabled: true }
+    }
+};
+
+const DEFAULT_ICONS = {
+    follow: '👤', gift: '🎁', like: '❤️', share: '🔗', sub: '🌟', join: '👋', donation: '💰'
+};
+
+const PARTICLE_EMOJIS = {
+    follow: ['✨', '⭐', '💫'],
+    gift: ['🪙', '💎', '✨', '🎁', '💰'],
+    like: ['❤️', '💖', '💕', '💗', '🩷'],
+    share: ['🔗', '🔄', '✨', '🌐'],
+    sub: ['🌟', '👑', '💎', '✨', '🎉'],
+    join: ['👋', '🎊', '✨'],
+    donation: ['💸', '💰', '💎', '✨']
+};
+
+let customStyleEl = document.createElement('style');
+document.head.appendChild(customStyleEl);
 
 // ===== تهيئة Canvas =====
 let particles = [];
@@ -18,69 +64,42 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// ===== إعدادات كل نوع تنبيه =====
-const ALERT_CONFIG = {
-    follow: {
-        icon: '👤',
-        label: 'NEW FOLLOWER',
-        particleColor: '#00e5ff',
-        particleEmoji: ['✨', '⭐', '💫'],
-    },
-    gift: {
-        icon: '🎁',
-        label: 'GIFT RECEIVED',
-        particleColor: '#ffd700',
-        particleEmoji: ['🪙', '💎', '✨', '🎁', '💰'],
-    },
-    like: {
-        icon: '❤️',
-        label: 'LIKES',
-        particleColor: '#ff2d55',
-        particleEmoji: ['❤️', '💖', '💕', '💗', '🩷'],
-    },
-    share: {
-        icon: '🔗',
-        label: 'SHARED',
-        particleColor: '#00e676',
-        particleEmoji: ['🔗', '🔄', '✨', '🌐'],
-    },
-    sub: {
-        icon: '🌟',
-        label: 'NEW SUBSCRIBER',
-        particleColor: '#b388ff',
-        particleEmoji: ['🌟', '👑', '💎', '✨', '🎉'],
-    },
-    join: {
-        icon: '👋',
-        label: 'JOINED',
-        particleColor: '#536dfe',
-        particleEmoji: ['👋', '🎊', '✨'],
-    }
-};
+// ===== الأصوات =====
+let loadedSounds = {};
 
-// ===== أصوات التنبيهات =====
-const SOUNDS = {};
-function loadSounds() {
-    const urls = {
-        follow: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3',
-        gift:   'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8b8f72927.mp3?filename=magic-wand-6214.mp3',
-        like:   'https://cdn.pixabay.com/download/audio/2021/08/09/audio_d6d03f69a9.mp3?filename=pop-39222.mp3',
-        share:  'https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3?filename=notification-1-6296.mp3',
-        sub:    'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=success-fanfare-trumpets-6185.mp3',
-        join:   'https://cdn.pixabay.com/download/audio/2021/08/09/audio_d6d03f69a9.mp3?filename=pop-39222.mp3',
-    };
-    for (const [key, url] of Object.entries(urls)) {
-        SOUNDS[key] = new Audio(url);
-        SOUNDS[key].volume = 0.5;
+function reloadSounds() {
+    loadedSounds = {};
+    for (const [key, config] of Object.entries(userSettings.alerts)) {
+        if (config.sound) {
+            loadedSounds[key] = new Audio(config.sound);
+        }
     }
 }
-loadSounds();
 
 function playSound(type) {
-    const s = SOUNDS[type] || SOUNDS['follow'];
-    const clone = s.cloneNode();
-    clone.volume = 0.5;
-    clone.play().catch(() => {});
+    if (!userSettings.globalSound) return;
+    const alertConfig = userSettings.alerts[type];
+    if (alertConfig && !alertConfig.enabled) return;
+
+    const s = loadedSounds[type] || loadedSounds['follow'];
+    if (s) {
+        const clone = s.cloneNode();
+        clone.volume = Math.max(0, Math.min(1, userSettings.volume / 100));
+        clone.play().catch(() => { /* المتصفح قد يمنع التشغيل التلقائي */ });
+    }
+}
+
+// ===== دكان تب Widget =====
+function updateDokanWidget() {
+    dokanContainer.innerHTML = '';
+    if (userSettings.dokanWidgetUrl) {
+        const iframe = document.createElement('iframe');
+        iframe.src = userSettings.dokanWidgetUrl;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        dokanContainer.appendChild(iframe);
+    }
 }
 
 // ===== نظام الجزيئات المتطايرة =====
@@ -99,7 +118,6 @@ class Particle {
         this.rotation = Math.random() * 360;
         this.rotSpeed = (Math.random() - 0.5) * 8;
     }
-
     update() {
         this.x += this.vx;
         this.y += this.vy;
@@ -108,7 +126,6 @@ class Particle {
         this.life -= this.decay;
         this.rotation += this.rotSpeed;
     }
-
     draw(ctx) {
         if (this.life <= 0) return;
         ctx.save();
@@ -125,27 +142,27 @@ class Particle {
 
 function spawnParticles(type, count = 25) {
     if (!ctx) return;
-    const config = ALERT_CONFIG[type] || ALERT_CONFIG['follow'];
+    const config = userSettings.alerts[type] || userSettings.alerts['follow'];
+    const emojis = PARTICLE_EMOJIS[type] || ['✨'];
+    const color = config ? config.color : '#fff';
     const centerX = canvas.width / 2;
     const startY = 140;
 
     for (let i = 0; i < count; i++) {
-        const emoji = config.particleEmoji[Math.floor(Math.random() * config.particleEmoji.length)];
+        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
         const x = centerX + (Math.random() - 0.5) * 300;
-        particles.push(new Particle(x, startY, emoji, config.particleColor));
+        particles.push(new Particle(x, startY, emoji, color));
     }
 }
 
 function animateParticles() {
     if (!ctx) { requestAnimationFrame(animateParticles); return; }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     particles = particles.filter(p => p.life > 0);
     for (const p of particles) {
         p.update();
         p.draw(ctx);
     }
-
     requestAnimationFrame(animateParticles);
 }
 animateParticles();
@@ -156,37 +173,52 @@ let isShowingAlert = false;
 
 function processQueue() {
     if (isShowingAlert || alertQueue.length === 0) return;
+    const data = alertQueue[0];
+    
+    // التحقق من تفعيل التنبيه
+    const config = userSettings.alerts[data.type] || userSettings.alerts['follow'];
+    if (config && !config.enabled) {
+        alertQueue.shift(); // تخطيه
+        processQueue();
+        return;
+    }
+    
     isShowingAlert = true;
-    const data = alertQueue.shift();
-    renderAlert(data);
+    alertQueue.shift();
+    renderAlert(data, config);
 }
 
 // ===== بناء وعرض التنبيه =====
-function renderAlert(data) {
-    const config = ALERT_CONFIG[data.type] || ALERT_CONFIG['follow'];
-
-    // صوت
+function renderAlert(data, config) {
     playSound(data.type);
 
-    // جزيئات
     const particleCount = data.type === 'gift' ? 40 : data.type === 'sub' ? 35 : 20;
     spawnParticles(data.type, particleCount);
 
-    // بناء HTML
     const card = document.createElement('div');
     card.className = 'alert-card anim-enter';
     card.setAttribute('data-type', data.type);
 
-    // الأفاتار
+    // تطبيق الألوان المخصصة (Inline Style)
+    const cColor = config.color || '#00e5ff';
+    card.style.setProperty('--holo-gradient', `linear-gradient(135deg, ${cColor}, #fff, ${cColor})`);
+    card.style.setProperty('--inner-glow', `radial-gradient(ellipse at 30% 50%, ${cColor}, transparent)`);
+    card.style.setProperty('--glow-color', cColor);
+    card.style.setProperty('--label-color', cColor);
+    card.style.setProperty('--label-bg', `rgba(255,255,255,0.1)`); // مجرد خلفية خفيفة
+
+    // الأفاتار أو الصورة المخصصة
     let avatarHtml;
-    if (data.avatar) {
+    if (config.image) {
+        avatarHtml = `<img class="avatar-img avatar-enter custom-alert-icon" src="${config.image}" alt="">`;
+    } else if (data.avatar) {
         avatarHtml = `
             <img class="avatar-img avatar-enter" 
                  src="${data.avatar}" alt=""
-                 onerror="this.outerHTML='<div class=\\'avatar-icon avatar-enter\\'>${config.icon}</div>'">
+                 onerror="this.outerHTML='<div class=\\'avatar-icon avatar-enter\\'>${DEFAULT_ICONS[data.type]}</div>'">
         `;
     } else {
-        avatarHtml = `<div class="avatar-icon avatar-enter">${config.icon}</div>`;
+        avatarHtml = `<div class="avatar-icon avatar-enter">${DEFAULT_ICONS[data.type] || '✨'}</div>`;
     }
 
     // صورة الهدية
@@ -199,32 +231,32 @@ function renderAlert(data) {
         `;
     }
 
-    // العدد
     let amountHtml = '';
     if (data.amount > 0) {
         amountHtml = `<div class="alert-amount amount-enter">x${data.amount}</div>`;
     }
 
+    const labelText = config.label || data.type.toUpperCase();
+
     card.innerHTML = `
         <div class="alert-body">
             <div class="alert-avatar-wrapper">
-                <div class="avatar-ring"></div>
+                <div class="avatar-ring" style="box-shadow: 0 0 15px ${cColor}"></div>
                 ${avatarHtml}
             </div>
             <div class="alert-text text-enter">
-                <span class="alert-label">${config.label}</span>
+                <span class="alert-label" style="color:${cColor}; border: 1px solid ${cColor}">${labelText}</span>
                 <div class="alert-username">${data.name}</div>
                 <div class="alert-msg">${data.message}</div>
             </div>
             ${giftHtml}
             ${amountHtml}
-            <div class="alert-bar"></div>
+            <div class="alert-bar" style="background: ${cColor}"></div>
         </div>
     `;
 
     alertContainer.appendChild(card);
 
-    // إزالة بعد 5 ثواني
     setTimeout(() => {
         card.classList.remove('anim-enter');
         card.classList.add('anim-exit');
@@ -236,11 +268,35 @@ function renderAlert(data) {
     }, 5000);
 }
 
-// ===== الاستماع من Socket.io =====
+// ===== الاتصال بالسيرفر =====
+const socket = io();
+
+socket.on('connect', () => {
+    console.log('✅ متصل بالخادم');
+    socket.emit('join_room', { token });
+});
+
+socket.on('update_settings', (settings) => {
+    console.log('⚙️ تم استلام إعدادات جديدة:', settings);
+    userSettings = { ...userSettings, ...settings };
+    
+    // تحديث الثيم CSS
+    if (userSettings.customCss) {
+        customStyleEl.textContent = userSettings.customCss;
+    } else {
+        customStyleEl.textContent = '';
+    }
+
+    // تحديث الأصوات
+    reloadSounds();
+
+    // تحديث دكان تب
+    updateDokanWidget();
+});
+
 socket.on('alert', (data) => {
     alertQueue.push(data);
     processQueue();
 });
 
-socket.on('connect', () => console.log('✅ متصل بالخادم'));
 socket.on('disconnect', () => console.log('⚠️ انقطع الاتصال'));

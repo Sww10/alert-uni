@@ -757,3 +757,163 @@ body.control-mode {
     .panel-header h1 { font-size: 1.6rem; }
     .buttons-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ======================================= */
+/*   SETTINGS MODAL (نافذة الإعدادات)      */
+/* ======================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #080a16;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.close-btn:hover { color: #ef4444; }
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-group {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.settings-group h3 {
+    font-size: 1rem;
+    color: #00e5ff;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.setting-row label {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+.custom-input {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.custom-input:focus {
+    outline: none;
+    border-color: #00e5ff;
+}
+
+.color-picker {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+}
+
+.btn-sm {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: inherit;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.btn-sm:hover { background: rgba(255,255,255,0.2); }
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: center;
+}
+
+.btn-settings-icon {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 0.8rem;
+}
+
+.btn-settings-icon:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.custom-alert-icon {
+    border-radius: 12px !important; /* لدعم الأشكال المربعة والحواف الدائرية */
+    object-fit: cover;
+}
