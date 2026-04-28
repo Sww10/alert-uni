@@ -231,6 +231,11 @@ function processQueue() {
 
 // ===== بناء وعرض التنبيه =====
 function renderAlert(data, config) {
+    const cColor = config.color || '#00e5ff';
+    
+    // تشغيل الانميشن الثلاثي الأبعاد
+    spawn3DAlert(data.type, cColor);
+
     playSound(data.type);
     playTTS(data.name, data.message);
 
@@ -241,8 +246,6 @@ function renderAlert(data, config) {
     card.className = 'alert-card anim-enter';
     card.setAttribute('data-type', data.type);
 
-    // تطبيق الألوان المخصصة وسرعة الأنيميشن (Inline Style)
-    const cColor = config.color || '#00e5ff';
     const animSpeed = userSettings.animSpeed || 1;
     
     card.style.setProperty('--anim-speed', animSpeed);
@@ -307,6 +310,10 @@ function renderAlert(data, config) {
     setTimeout(() => {
         card.classList.remove('anim-enter');
         card.classList.add('anim-exit');
+        
+        // إزالة الجسم ثلاثي الأبعاد
+        remove3DAlert();
+
         setTimeout(() => {
             card.remove();
             isShowingAlert = false;
@@ -314,6 +321,129 @@ function renderAlert(data, config) {
         }, 600 * animSpeed); // الانتظار حتى انتهاء خروج البطاقة بناء على السرعة
     }, durationMs);
 }
+
+
+
+// ============================================================
+// 🎮 3D ENGINE - نظام الانميشن ثلاثي الأبعاد
+// ============================================================
+
+let threeScene, threeCamera, threeRenderer, threeObject;
+const threeContainer = document.getElementById('three-container');
+
+function initThree() {
+    if (!threeContainer) return;
+
+    threeScene = new THREE.Scene();
+    threeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    threeCamera.position.z = 5;
+
+    threeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    threeRenderer.setSize(window.innerWidth, window.innerHeight);
+    threeRenderer.setPixelRatio(window.devicePixelRatio);
+    threeContainer.appendChild(threeRenderer.domElement);
+
+    // إضافة الإضاءة
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    threeScene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0x00e5ff, 2, 100);
+    pointLight.position.set(5, 5, 5);
+    threeScene.add(pointLight);
+
+    animateThree();
+}
+
+function animateThree() {
+    requestAnimationFrame(animateThree);
+    
+    if (threeObject) {
+        threeObject.rotation.y += 0.02;
+        threeObject.rotation.z += 0.01;
+        
+        // تأثير نبضي
+        const scale = 1 + Math.sin(Date.now() * 0.005) * 0.1;
+        threeObject.scale.set(scale, scale, scale);
+    }
+    
+    threeRenderer.render(threeScene, threeCamera);
+}
+
+function spawn3DAlert(type, color) {
+    if (!threeScene) return;
+
+    // تنظيف أي جسم سابق
+    if (threeObject) threeScene.remove(threeObject);
+
+    // إنشاء جسم 3D فخم (مثلاً كريستالة متوهجة)
+    const geometry = new THREE.IcosahedronGeometry(1.5, 0);
+    const material = new THREE.MeshPhongMaterial({
+        color: color || 0x00e5ff,
+        emissive: color || 0x00e5ff,
+        emissiveIntensity: 0.5,
+        flatShading: true,
+        transparent: true,
+        opacity: 0.9
+    });
+
+    threeObject = new THREE.Mesh(geometry, material);
+    
+    // إضافة إطار متوهج (Wireframe)
+    const wireframeGeom = new THREE.IcosahedronGeometry(1.55, 0);
+    const wireframeMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.2
+    });
+    const wireframe = new THREE.Mesh(wireframeGeom, wireframeMat);
+    threeObject.add(wireframe);
+
+    // حركة الدخول (Zoom In)
+    threeObject.scale.set(0, 0, 0);
+    threeScene.add(threeObject);
+
+    // إضافة إضاءة ملونة مخصصة لهذا التنبيه
+    const alertLight = new THREE.PointLight(color || 0x00e5ff, 5, 20);
+    threeObject.add(alertLight);
+
+    // أنيميشن بسيط للدخول (يمكن استبداله بـ GSAP إذا كان متوفراً)
+    let s = 0;
+    const interval = setInterval(() => {
+        s += 0.1;
+        if (s >= 1.2) {
+            s = 1.2;
+            clearInterval(interval);
+        }
+        threeObject.scale.set(s, s, s);
+    }, 20);
+}
+
+function remove3DAlert() {
+    if (!threeObject) return;
+    
+    let s = 1.2;
+    const interval = setInterval(() => {
+        s -= 0.1;
+        if (s <= 0) {
+            threeScene.remove(threeObject);
+            threeObject = null;
+            clearInterval(interval);
+        } else {
+            threeObject.scale.set(s, s, s);
+        }
+    }, 20);
+}
+
+initThree();
+
+window.addEventListener('resize', () => {
+    if (threeCamera && threeRenderer) {
+        threeCamera.aspect = window.innerWidth / window.innerHeight;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(window.innerWidth, window.innerHeight);
+    }
+});
 
 // ===== الاتصال بالسيرفر =====
 const socket = io();
