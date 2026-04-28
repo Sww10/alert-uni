@@ -61,6 +61,7 @@ body.overlay-mode {
     border-radius: 20px;
     overflow: visible;
     transform-origin: center top;
+    will-change: transform, opacity, filter;
 }
 
 /* الإطار المتحرك (Holographic Border) */
@@ -334,7 +335,7 @@ body.overlay-mode {
 
 /* دخول عام */
 .anim-enter {
-    animation: card-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: card-enter calc(0.7s * var(--anim-speed, 1)) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes card-enter {
@@ -357,7 +358,7 @@ body.overlay-mode {
 
 /* خروج عام */
 .anim-exit {
-    animation: card-exit 0.55s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+    animation: card-exit calc(0.55s * var(--anim-speed, 1)) cubic-bezier(0.55, 0, 1, 0.45) forwards;
 }
 
 @keyframes card-exit {
@@ -367,7 +368,8 @@ body.overlay-mode {
 
 /* دخول الأفاتار */
 .avatar-enter {
-    animation: avatar-pop 0.5s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    animation: avatar-pop calc(0.5s * var(--anim-speed, 1)) calc(0.2s * var(--anim-speed, 1)) cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    will-change: transform, opacity;
 }
 
 @keyframes avatar-pop {
@@ -377,7 +379,8 @@ body.overlay-mode {
 
 /* دخول النص */
 .text-enter {
-    animation: text-slide 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: text-slide calc(0.5s * var(--anim-speed, 1)) calc(0.3s * var(--anim-speed, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
+    will-change: transform, opacity;
 }
 
 @keyframes text-slide {
@@ -387,7 +390,8 @@ body.overlay-mode {
 
 /* دخول العدد */
 .amount-enter {
-    animation: amount-bounce 0.6s 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    animation: amount-bounce calc(0.6s * var(--anim-speed, 1)) calc(0.4s * var(--anim-speed, 1)) cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    will-change: transform, opacity;
 }
 
 @keyframes amount-bounce {
@@ -398,7 +402,8 @@ body.overlay-mode {
 
 /* دخول الهدية */
 .gift-enter {
-    animation: gift-drop 0.6s 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    animation: gift-drop calc(0.6s * var(--anim-speed, 1)) calc(0.35s * var(--anim-speed, 1)) cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    will-change: transform, opacity;
 }
 
 @keyframes gift-drop {
