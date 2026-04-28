@@ -122,6 +122,8 @@ function updateDokanWidget() {
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';
+        iframe.allow = "autoplay; fullscreen; encrypted-media";
+        iframe.allowTransparency = "true";
         dokanContainer.appendChild(iframe);
     }
 }
