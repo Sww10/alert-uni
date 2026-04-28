@@ -33,7 +33,8 @@ io.on('connection', (socket) => {
                 tiktokConnection: null,
                 isConnected: false,
                 username: '',
-                settings: null
+                settings: null,
+                likesBuffer: {}
             });
         }
         
@@ -118,14 +119,42 @@ io.on('connection', (socket) => {
             });
 
             session.tiktokConnection.on('like', (data) => {
-                io.to(token).emit('alert', {
-                    type: 'like',
-                    name: data.nickname || data.uniqueId,
-                    username: data.uniqueId,
-                    avatar: data.profilePictureUrl,
-                    message: 'أعجب بالبث! ❤️',
-                    amount: data.likeCount || 0
-                });
+                const uid = data.uniqueId;
+                if (!session.likesBuffer[uid]) {
+                    session.likesBuffer[uid] = { count: 0, timer: null, data: data };
+                }
+                
+                // تجميع التكبيسات (اللايكات)
+                session.likesBuffer[uid].count += (data.likeCount || 1);
+                session.likesBuffer[uid].data = data;
+                
+                // مسح المؤقت السابق
+                if (session.likesBuffer[uid].timer) {
+                    clearTimeout(session.likesBuffer[uid].timer);
+                }
+                
+                // دالة إرسال الإشعار
+                const flushLikes = () => {
+                    const buffer = session.likesBuffer[uid];
+                    if (!buffer) return;
+                    io.to(token).emit('alert', {
+                        type: 'like',
+                        name: buffer.data.nickname || buffer.data.uniqueId,
+                        username: buffer.data.uniqueId,
+                        avatar: buffer.data.profilePictureUrl,
+                        message: 'أعجب بالبث! ❤️',
+                        amount: buffer.count
+                    });
+                    delete session.likesBuffer[uid]; // تصفير العداد لهذا المستخدم
+                };
+
+                // إذا وصل عدد اللايكات رقم كبير جداً (مثلاً 200)، يتم إرساله فوراً لعدم التأخير الطويل
+                if (session.likesBuffer[uid].count >= 200) {
+                    flushLikes();
+                } else {
+                    // الانتظار لمدة 4 ثواني بدون تكبيس قبل إظهار الإشعار النهائي
+                    session.likesBuffer[uid].timer = setTimeout(flushLikes, 4000);
+                }
             });
 
             session.tiktokConnection.on('share', (data) => {
