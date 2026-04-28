@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم التنبيهات الذكية</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="control-mode">
+
+    <div class="control-panel">
+        <!-- العنوان -->
+        <div class="panel-header">
+            <div class="logo-glow"></div>
+            <h1>⚡ Smart Alerts</h1>
+            <p class="subtitle">نظام تنبيهات ذكي لبث التيك توك</p>
+        </div>
+
+        <!-- حالة الاتصال -->
+        <div class="status-bar" id="statusBar">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">غير متصل</span>
+        </div>
+
+        <!-- قسم الاتصال -->
+        <div class="connect-section">
+            <label for="usernameInput">اسم المستخدم في تيك توك</label>
+            <div class="input-group">
+                <span class="input-prefix">@</span>
+                <input type="text" id="usernameInput" placeholder="your_username" autocomplete="off" spellcheck="false">
+            </div>
+            <button class="btn btn-connect" id="connectBtn" onclick="handleConnect()">
+                <span id="connectBtnIcon">🔌</span>
+                <span id="connectBtnText">اتصال بالبث</span>
+            </button>
+        </div>
+
+        <!-- معلومات البث -->
+        <div class="live-info" id="liveInfo" style="display: none;">
+            <div class="info-card">
+                <span class="info-icon">👁️</span>
+                <span class="info-label">المشاهدين</span>
+                <span class="info-value" id="viewerCount">0</span>
+            </div>
+            <div class="info-card">
+                <span class="info-icon">📡</span>
+                <span class="info-label">الحالة</span>
+                <span class="info-value" id="liveStatus">مباشر</span>
+            </div>
+        </div>
+
+        <!-- رسالة خطأ -->
+        <div class="error-msg" id="errorMsg" style="display: none;"></div>
+
+        <!-- فاصل -->
+        <div class="divider">
+            <span>🧪 تجربة التنبيهات</span>
+        </div>
+
+        <!-- أزرار التجربة -->
+        <div class="buttons-grid">
+            <button class="btn btn-follow" onclick="testAlert('follow')">
+                <span class="btn-icon">👤</span>
+                <span>متابعة</span>
+            </button>
+            <button class="btn btn-gift" onclick="testAlert('gift')">
+                <span class="btn-icon">🎁</span>
+                <span>هدية</span>
+            </button>
+            <button class="btn btn-like" onclick="testAlert('like')">
+                <span class="btn-icon">❤️</span>
+                <span>إعجاب</span>
+            </button>
+            <button class="btn btn-share" onclick="testAlert('share')">
+                <span class="btn-icon">🔗</span>
+                <span>مشاركة</span>
+            </button>
+            <button class="btn btn-sub" onclick="testAlert('sub')">
+                <span class="btn-icon">🌟</span>
+                <span>اشتراك</span>
+            </button>
+            <button class="btn btn-join" onclick="testAlert('join')">
+                <span class="btn-icon">👋</span>
+                <span>انضمام</span>
+            </button>
+        </div>
+
+        <!-- رابط شاشة البث -->
+        <div class="alert-link-section">
+            <p>📺 رابط شاشة التنبيهات (ضعه في TikTok Studio):</p>
+            <div class="link-copy-box" onclick="copyLink()">
+                <code id="alertLink">http://localhost:3000/alert.html</code>
+                <span class="copy-btn" id="copyFeedback">📋 نسخ</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let isConnected = false;
+
+        // --- عناصر الصفحة ---
+        const statusBar = document.getElementById('statusBar');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const connectBtn = document.getElementById('connectBtn');
+        const connectBtnIcon = document.getElementById('connectBtnIcon');
+        const connectBtnText = document.getElementById('connectBtnText');
+        const usernameInput = document.getElementById('usernameInput');
+        const liveInfo = document.getElementById('liveInfo');
+        const viewerCount = document.getElementById('viewerCount');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // --- تحديث الحالة ---
+        socket.on('status', (data) => {
+            errorMsg.style.display = 'none';
+
+            if (data.connecting) {
+                statusBar.className = 'status-bar connecting';
+                statusText.textContent = `جاري الاتصال بـ @${data.username}...`;
+                connectBtnText.textContent = 'جاري الاتصال...';
+                connectBtnIcon.textContent = '⏳';
+                connectBtn.disabled = true;
+                return;
+            }
+
+            if (data.error) {
+                errorMsg.textContent = '❌ ' + data.error;
+                errorMsg.style.display = 'block';
+            }
+
+            isConnected = data.connected;
+            connectBtn.disabled = false;
+
+            if (data.connected) {
+                statusBar.className = 'status-bar connected';
+                statusText.textContent = `متصل بـ @${data.username}`;
+                connectBtnText.textContent = 'قطع الاتصال';
+                connectBtnIcon.textContent = '🔴';
+                connectBtn.className = 'btn btn-disconnect';
+                liveInfo.style.display = 'flex';
+                if (data.viewers !== undefined) {
+                    viewerCount.textContent = data.viewers.toLocaleString();
+                }
+            } else {
+                statusBar.className = 'status-bar disconnected';
+                statusText.textContent = 'غير متصل';
+                connectBtnText.textContent = 'اتصال بالبث';
+                connectBtnIcon.textContent = '🔌';
+                connectBtn.className = 'btn btn-connect';
+                liveInfo.style.display = 'none';
+            }
+        });
+
+        socket.on('viewers_update', (data) => {
+            viewerCount.textContent = data.count.toLocaleString();
+        });
+
+        // --- أوامر ---
+        function handleConnect() {
+            if (isConnected) {
+                socket.emit('disconnect_tiktok');
+            } else {
+                const username = usernameInput.value.trim();
+                if (!username) {
+                    errorMsg.textContent = '❌ اكتب اسم المستخدم الخاص بك أولاً!';
+                    errorMsg.style.display = 'block';
+                    usernameInput.focus();
+                    return;
+                }
+                socket.emit('connect_tiktok', username);
+            }
+        }
+
+        function testAlert(type) {
+            socket.emit('test_alert', type);
+        }
+
+        function copyLink() {
+            const link = document.getElementById('alertLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                const fb = document.getElementById('copyFeedback');
+                fb.textContent = '✅ تم النسخ!';
+                setTimeout(() => fb.textContent = '📋 نسخ', 2000);
+            });
+        }
+
+        // Enter للاتصال
+        usernameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleConnect();
+        });
+    </script>
+</body>
+</html>

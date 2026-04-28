@@ -1,0 +1,6 @@
+node_modules/
+.env
+alert-uni/
+start.bat
+تشغيل_مخفي.vbs
+إيقاف_الخادم.bat
